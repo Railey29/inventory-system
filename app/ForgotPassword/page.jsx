@@ -3,26 +3,24 @@
 import { useState } from "react";
 import Image from "next/image";
 
-import RegisterHeader from "../components/RegisterHeader";
-import RegisterForm from "../components/RegisterForm";
 import WelcomeIcon from "../components/WelcomeIcon";
-import { handleSubmitRegister } from "../controller/registerController";
+import ResetPasswordHeader from "../components/ResetPasswordHeader";
+import ResetPasswordForm from "../components/ResetPasswordForm";
+
 export default function Page() {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("");
 
   const onSubmit = (e) => {
-    handleSubmitRegister(e, { name, email, password, confirmPassword, role });
+    handleResetPassword(e, { email, newPassword, confirmPassword });
   };
 
   return (
-    <div className="flex h-screen font-inter overflow-hidden">
+    <div className="flex h-screen font-inter overflow-hidden bg-gray-50">
       <WelcomeIcon />
 
-      {/* Right Panel - Register Form */}
+      {/* Right Panel - Reset Password Form */}
       <div className="w-full md:w-1/2 bg-white flex flex-col items-center justify-center p-8 overflow-y-auto">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
@@ -41,22 +39,18 @@ export default function Page() {
 
           {/* Header */}
           <div className="animate__animated animate__fadeInDown animate__slow mb-4">
-            <RegisterHeader />
+            <ResetPasswordHeader />
           </div>
 
-          {/* Register Form */}
+          {/* Reset Password Form */}
           <div className="animate__animated animate__fadeInUp animate__slow mb-6">
-            <RegisterForm
-              name={name}
-              setName={setName}
+            <ResetPasswordForm
               email={email}
               setEmail={setEmail}
-              password={password}
-              setPassword={setPassword}
+              newPassword={newPassword}
+              setNewPassword={setNewPassword}
               confirmPassword={confirmPassword}
               setConfirmPassword={setConfirmPassword}
-              role={role}
-              setRole={setRole}
               onSubmit={onSubmit}
             />
           </div>

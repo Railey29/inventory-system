@@ -55,7 +55,7 @@ export default function LoginComponents({
       {/* Forgot password */}
       <div className="flex justify-end">
         <a
-          href="#"
+          href="/ForgotPassword/"
           className="text-sm font-medium text-blue-600 hover:text-blue-700"
         >
           Forgot password?

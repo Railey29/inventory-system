@@ -5,7 +5,7 @@ import Image from "next/image";
 
 import WelcomeIcon from "./components/WelcomeIcon";
 import LoginHeader from "./components/LoginHeader";
-import LoginComponents from "./components/LoginComponents";
+import LoginForm from "./components/LoginForm";
 
 import { handleSubmitLogin } from "./controller/loginController";
 
@@ -45,7 +45,7 @@ export default function LoginPage() {
 
           {/* Login Form */}
           <div className="animate__animated animate__fadeInUp animate__slow mb-6">
-            <LoginComponents
+            <LoginForm
               email={email}
               setEmail={setEmail}
               password={password}
