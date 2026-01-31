@@ -4,3 +4,22 @@
 body {
   font-family: var(--font-inter);
 }
+
+.gear {
+  position: absolute;
+  top: 41; /* adjust ito depende sa exact spot ng E */
+  left: -134; /* adjust ito depende sa exact spot ng E */
+  width: 100%; /* same size as logo wrapper or adjust as needed */
+  height: auto;
+  transform-origin: center center; /* umiikot sa gitna ng image */
+  animation: spin 5s linear infinite; /* custom speed */
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
