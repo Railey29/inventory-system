@@ -1,6 +1,16 @@
+"use client";
+
 import { Search, Bell, Settings, X, Menu } from "lucide-react";
+import { useAuth } from "../hook/useAuth";
+import { getDisplayName, getAvatarLetter } from "../utils/userHelper";
 
 export default function TopNavbar({ sidebarOpen, setSidebarOpen }) {
+  const { userEmail, displayName, loading } = useAuth();
+
+  // use userHelper.js to extract name from email
+  const displayedName = getDisplayName(null, userEmail);
+  const avatarLetter = getAvatarLetter(null, userEmail);
+
   return (
     <nav className="bg-white border-b border-gray-200 fixed w-full z-30 top-0">
       <div className="px-3 sm:px-4 lg:px-8">
@@ -11,11 +21,7 @@ export default function TopNavbar({ sidebarOpen, setSidebarOpen }) {
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-1.5 sm:p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
             >
-              {sidebarOpen ? (
-                <X size={20} className="sm:w-6 sm:h-6" />
-              ) : (
-                <Menu size={20} className="sm:w-6 sm:h-6" />
-              )}
+              {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
             <h1 className="text-base sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent whitespace-nowrap">
               Inventory System
@@ -56,15 +62,23 @@ export default function TopNavbar({ sidebarOpen, setSidebarOpen }) {
             {/* User Profile */}
             <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-gray-200">
               <div className="text-right hidden md:block">
-                <p className="text-xs lg:text-sm font-medium text-gray-900">
-                  Admin User
-                </p>
-                <p className="text-[10px] lg:text-xs text-gray-500">
-                  Administrator
-                </p>
+                {loading ? (
+                  <p className="text-xs lg:text-sm font-medium text-gray-400">
+                    Loading...
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-xs lg:text-sm font-medium text-gray-900">
+                      {displayedName}
+                    </p>
+                    <p className="text-[10px] lg:text-xs text-gray-500">
+                      Admin
+                    </p>
+                  </>
+                )}
               </div>
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white text-sm sm:text-base font-semibold">
-                A
+                {avatarLetter}
               </div>
             </div>
           </div>

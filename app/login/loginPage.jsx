@@ -4,33 +4,37 @@ import { useState } from "react";
 import Image from "next/image";
 
 import WelcomeIcon from "../components/WelcomeIcon";
-import RegisterHeader from "../components/RegisterHeader";
-import RegisterForm from "../components/RegisterForm";
-import { handleFormSubmit } from "../utils/formHandlers"; // ✅ Keep this
-import { handleSubmitRegister } from "../controller/registerController";
+import LoginHeader from "../components/LoginHeader";
+import LoginForm from "../components/LoginForm";
+import { handleSubmitLogin } from "../controller/loginController";
+import { handleFormSubmit } from "../utils/formHandlers";
 
-export default function RegisterPage() {
-  const [name, setName] = useState("");
+import { supabase } from "../../lib/supabaseClient";
+
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("");
   const [loading, setLoading] = useState(false);
 
   const onSubmit = (e) => {
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-
     handleFormSubmit({
       e,
-      controllerFn: handleSubmitRegister, // ✅ Now it's imported
-      data: { name, email, password, role },
+      controllerFn: handleSubmitLogin,
+      data: { email, password },
       setLoading,
-      onSuccess: (response) => {
-        alert(response.message || "Account Created successfully!");
-        window.location.href = "/";
+      onSuccess: async (response) => {
+        try {
+          // Set Supabase session
+          await supabase.auth.setSession(response.session);
+
+          alert("Login Successful!");
+          console.log("Session: ", response.session);
+
+          window.location.href = "/dashboard";
+        } catch (err) {
+          console.error("Failed to set session:", err);
+          alert("Login failed, please try again.");
+        }
       },
       onError: (error) => alert(error.message),
     });
@@ -56,21 +60,15 @@ export default function RegisterPage() {
           </div>
 
           <div className="animate__animated animate__fadeInDown animate__slow mb-2">
-            <RegisterHeader />
+            <LoginHeader />
           </div>
 
           <div className="animate__animated animate__fadeInUp animate__slow mb-4">
-            <RegisterForm
-              name={name}
-              setName={setName}
+            <LoginForm
               email={email}
               setEmail={setEmail}
               password={password}
               setPassword={setPassword}
-              confirmPassword={confirmPassword}
-              setConfirmPassword={setConfirmPassword}
-              role={role}
-              setRole={setRole}
               onSubmit={onSubmit}
               loading={loading}
             />

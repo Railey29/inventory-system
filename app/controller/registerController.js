@@ -1,26 +1,24 @@
 import axios from "axios";
 
-export const handleSubmitRegister = async (e, formData) => {
-  e.preventDefault();
+export const handleSubmitRegister = async (formData) => {
   console.log("Register Data:", formData);
 
   try {
-    const response = await axios.post("/api/register", {
+    const response = await axios.post("/api/auth/register", {
       name: formData.name,
       email: formData.email,
       password: formData.password,
       role: formData.role,
     });
 
-    alert(response.data.message || "Account Created Successfully!");
-    window.location.href = "/";
+    return response.data; // ✅ Return data for onSuccess callback
   } catch (error) {
     if (error.response) {
-      alert("Error: " + error.response.data);
+      throw new Error(error.response.data);
     } else if (error.request) {
-      alert("No Response From Server. Please Try Again");
+      throw new Error("No Response From Server. Please Try Again");
     } else {
-      alert("Error: " + error.message);
+      throw new Error(error.message);
     }
   }
 };

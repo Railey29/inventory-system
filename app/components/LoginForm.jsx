@@ -1,5 +1,7 @@
 import { useState } from "react";
 import Link from "next/link";
+import { FaRegEye } from "react-icons/fa";
+import { FaRegEyeSlash } from "react-icons/fa";
 
 export default function LoginComponents({
   email,
@@ -47,7 +49,7 @@ export default function LoginComponents({
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-600 hover:text-blue-600"
           >
-            {showPassword ? "Hide" : "Show"}
+            {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
           </button>
         </div>
       </div>
@@ -55,7 +57,7 @@ export default function LoginComponents({
       {/* Forgot password */}
       <div className="flex justify-end">
         <a
-          href="/ForgotPassword/"
+          href="/forgot-password"
           className="text-sm font-medium text-blue-600 hover:text-blue-700"
         >
           Forgot password?
@@ -75,7 +77,7 @@ export default function LoginComponents({
       <p className="text-center text-sm text-gray-600">
         Don’t have an account?{" "}
         <Link
-          href="/Register"
+          href="/register"
           className="font-medium text-blue-600 hover:text-blue-700"
         >
           Register

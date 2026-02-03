@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { FaRegEye } from "react-icons/fa";
+import { FaRegEyeSlash } from "react-icons/fa";
 
 export default function RegisterComponents({
   name,
@@ -81,15 +83,21 @@ export default function RegisterComponents({
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-3 focus:ring-blue-100 transition-all text-black"
             required
+            minLength={8}
+            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$"
+            title="Password must contain at least 8 characters, including uppercase, lowercase, and numbers"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-600 hover:text-blue-600"
           >
-            {showPassword ? "Hide" : "Show"}
+            {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
           </button>
         </div>
+        <p className="text-xs text-gray-500 mt-1">
+          At least 8 characters with uppercase, lowercase, and numbers
+        </p>
       </div>
 
       {/* Confirm Password */}
@@ -105,13 +113,16 @@ export default function RegisterComponents({
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-3 focus:ring-blue-100 transition-all text-black"
             required
+            minLength={8}
+            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$"
+            title="Password must contain at least 8 characters, including uppercase, lowercase, and numbers"
           />
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-600 hover:text-blue-600"
           >
-            {showConfirmPassword ? "Hide" : "Show"}
+            {showConfirmPassword ? <FaRegEyeSlash /> : <FaRegEye />}
           </button>
         </div>
       </div>

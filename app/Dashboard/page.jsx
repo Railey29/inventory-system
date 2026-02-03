@@ -1,15 +1,8 @@
 "use client";
+
 import { useState } from "react";
+import { useAuth } from "../hook/useAuth";
 
-// Import ALL data from DashboardData in utils
-import {
-  stats,
-  recentActivities,
-  lowStockItems,
-  topCategories,
-} from "../../utils/DashboardData";
-
-// all components
 import DashboardHeader from "../components/DashboardHeader";
 import LowStockAlert from "../components/LowStockAlert";
 import Sidebar from "../components/Sidebar";
@@ -19,18 +12,28 @@ import RecentActivities from "../components/RecentActivities";
 import TopCategories from "../components/TopCategories";
 import QuickActions from "../components/QuickActions";
 
+import {
+  stats,
+  recentActivities,
+  lowStockItems,
+  topCategories,
+} from "../utils/DashboardData";
+
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Initialize auth (no loading screen)
+  useAuth();
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation - Slide in from top */}
-      <div className="animate__animated animate__fadeInDown animate__faster">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
+      {/* Top Navbar */}
+      <div className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200/60 shadow-sm">
         <TopNavbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       </div>
 
-      {/* Sidebar - NO ANIMATION, may built-in transition na */}
+      {/* Sidebar */}
       <Sidebar
         sidebarOpen={sidebarOpen}
         activeTab={activeTab}
@@ -38,49 +41,64 @@ export default function Dashboard() {
         setSidebarOpen={setSidebarOpen}
       />
 
-      {/* Main Content */}
+      {/* Main content */}
       <main
-        className={`pt-16 sm:pt-20 transition-all duration-300 ${
+        className={`pt-20 transition-all duration-300 ease-in-out ${
           sidebarOpen ? "lg:ml-64" : "lg:ml-0"
         }`}
       >
-        <div className="px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-          {/* Header - Fade in */}
-          <div className="animate__animated animate__fadeIn">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          {/* Dashboard Header */}
+          <div className="mb-8 opacity-0 animate-[fadeIn_0.6s_ease-out_forwards]">
             <DashboardHeader />
           </div>
 
-          {/* Stats Grid - Fade in up with stagger */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-8">
             {stats.map((stat, index) => (
               <div
                 key={index}
-                className="animate__animated animate__fadeInUp"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                className="opacity-0 animate-[fadeInUp_0.6s_ease-out_forwards]"
+                style={{
+                  animationDelay: `${0.1 + index * 0.08}s`,
+                  transformOrigin: "bottom",
+                }}
               >
-                <StatsCard stat={stat} />
+                <div className="group relative bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 hover:-translate-y-1">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                  <StatsCard stat={stat} />
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Main Grid - Equal width columns */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-            <div className="animate__animated animate__fadeInLeft animate__delay-1s">
-              <RecentActivities activities={recentActivities} />
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+            <div className="xl:col-span-2 opacity-0 animate-[fadeInLeft_0.8s_ease-out_0.4s_forwards]">
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 h-full overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <RecentActivities activities={recentActivities} />
+              </div>
             </div>
-            <div className="animate__animated animate__fadeInRight animate__delay-1s">
-              <LowStockAlert items={lowStockItems} />
+
+            <div className="opacity-0 animate-[fadeInRight_0.8s_ease-out_0.5s_forwards]">
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 h-full overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <LowStockAlert items={lowStockItems} />
+              </div>
             </div>
           </div>
 
-          {/* Categories Overview - Zoom in */}
-          <div className="animate__animated animate__zoomIn animate__delay-1s">
-            <TopCategories categories={topCategories} />
+          {/* Categories */}
+          <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards] mb-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+              <TopCategories categories={topCategories} />
+            </div>
           </div>
 
-          {/* Quick Actions - Bounce in */}
-          <div className="animate__animated animate__fadeInUp animate__delay-2s">
-            <QuickActions />
+          {/* Quick Actions */}
+          <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.7s_forwards]">
+            <div className="bg-gradient-to-br from-white to-slate-50/50 rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+              <QuickActions />
+            </div>
           </div>
         </div>
       </main>
