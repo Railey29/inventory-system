@@ -1,29 +1,25 @@
-import { Geist, Geist_Mono } from "next/font/google";
+// app/layout.jsx
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
+// ✅ Force the entire app to be dynamic
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const metadata = {
   title: "Inventory System",
-  description: "Inventory System",
+  description: "Track your assets. Manage your workflow. Optimize results.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+        />
+      </head>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
