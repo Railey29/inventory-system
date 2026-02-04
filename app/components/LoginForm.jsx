@@ -69,7 +69,7 @@ export default function LoginComponents({
         type="submit"
         className="w-full py-3 text-white font-semibold rounded-lg
         bg-blue-600 hover:bg-blue-700
-        transition-all duration-200"
+        transition-all duration-20 cursor-pointer"
       >
         Sign in
       </button>

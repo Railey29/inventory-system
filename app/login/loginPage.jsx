@@ -9,8 +9,6 @@ import LoginForm from "../components/LoginForm";
 import { handleSubmitLogin } from "../controller/loginController";
 import { handleFormSubmit } from "../utils/formHandlers";
 
-import { supabase } from "../../lib/supabaseClient";
-
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,24 +17,20 @@ export default function LoginPage() {
   const onSubmit = (e) => {
     handleFormSubmit({
       e,
-      controllerFn: handleSubmitLogin,
+      controllerFn: handleSubmitLogin, // client-side login controller
       data: { email, password },
       setLoading,
       onSuccess: async (response) => {
-        try {
-          // Set Supabase session
-          await supabase.auth.setSession(response.session);
+        console.log("Logged in user:", response.user);
+        alert("Login Successful!");
 
-          alert("Login Successful!");
-          console.log("Session: ", response.session);
-
-          window.location.href = "/dashboard";
-        } catch (err) {
-          console.error("Failed to set session:", err);
-          alert("Login failed, please try again.");
-        }
+        // redirect to dashboard
+        window.location.href = "/dashboard";
       },
-      onError: (error) => alert(error.message),
+      onError: (error) => {
+        console.error("Login error:", error.message);
+        alert(error.message);
+      },
     });
   };
 

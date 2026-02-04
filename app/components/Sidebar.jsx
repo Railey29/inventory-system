@@ -1,3 +1,4 @@
+"use client";
 import {
   BarChart3,
   Package,
@@ -6,6 +7,9 @@ import {
   Users,
   LogOut,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { handleLogout } from "../controller/logoutController";
+import { handleFormSubmit } from "../utils/formHandlers";
 
 export default function Sidebar({
   sidebarOpen,
@@ -13,16 +17,32 @@ export default function Sidebar({
   setActiveTab,
   setSidebarOpen,
 }) {
+  const router = useRouter();
+
   const menuItems = [
-    { id: "overview", label: "Overview", icon: BarChart3 },
-    { id: "products", label: "Products", icon: Package },
-    { id: "categories", label: "Categories", icon: FolderOpen },
-    { id: "logs", label: "Inventory Logs", icon: Activity },
-    { id: "users", label: "Users", icon: Users },
+    { id: "overview", label: "Overview", icon: BarChart3, path: "/dashboard" },
+    { id: "products", label: "Products", icon: Package, path: "/products" },
+    {
+      id: "categories",
+      label: "Categories",
+      icon: FolderOpen,
+      path: "/categories",
+    },
+    {
+      id: "logs",
+      label: "Inventory Logs",
+      icon: Activity,
+      path: "/inventory-logs",
+    },
+    { id: "users", label: "Users", icon: Users, path: "/users" },
   ];
 
-  const handleMenuClick = (id) => {
+  const handleMenuClick = (id, path) => {
     setActiveTab(id);
+
+    // Navigate to the page
+    router.push(path);
+
     // Close sidebar on mobile after clicking
     if (window.innerWidth < 1024) {
       setSidebarOpen(false);
@@ -50,7 +70,7 @@ export default function Sidebar({
             {menuItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => handleMenuClick(item.id)}
+                onClick={() => handleMenuClick(item.id, item.path)}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-all text-sm sm:text-base ${
                   activeTab === item.id
                     ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200"
@@ -63,7 +83,20 @@ export default function Sidebar({
             ))}
 
             <div className="pt-3 sm:pt-4 mt-3 sm:mt-4 border-t border-gray-200">
-              <button className="w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all text-sm sm:text-base">
+              <button
+                onClick={(e) =>
+                  handleFormSubmit({
+                    e,
+                    controllerFn: handleLogout,
+                    onSuccess: () => {
+                      // Redirect to login page after logout
+                      window.location.href = "/";
+                    },
+                    onError: (err) => alert(err.message),
+                  })
+                }
+                className="w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all text-sm sm:text-base cursor-pointer"
+              >
                 <LogOut size={18} className="sm:w-5 sm:h-5 flex-shrink-0" />
                 <span className="font-medium">Logout</span>
               </button>
