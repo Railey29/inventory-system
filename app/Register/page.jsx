@@ -1,7 +1,6 @@
 // app/register/page.jsx
 "use client";
 
-// ✅ CRITICAL: This forces Vercel to include this route in production
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
