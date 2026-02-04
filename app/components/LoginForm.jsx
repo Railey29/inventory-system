@@ -77,7 +77,7 @@ export default function LoginComponents({
       <p className="text-center text-sm text-gray-600">
         Don’t have an account?{" "}
         <Link
-          href="/Register"
+          href="/register"
           className="font-medium text-blue-600 hover:text-blue-700"
         >
           Register
