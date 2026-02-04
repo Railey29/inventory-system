@@ -23,7 +23,6 @@ export default function LoginPage() {
       onSuccess: async (response) => {
         console.log("Logged in user:", response.user);
         alert("Login Successful!");
-        git;
         // redirect to dashboard
         window.location.href = "/dashboard";
       },
