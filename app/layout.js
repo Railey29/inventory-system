@@ -3,7 +3,6 @@ import "./globals.css";
 
 // ✅ Force the entire app to be dynamic
 export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
 
 export const metadata = {
   title: "Inventory System",

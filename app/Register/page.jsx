@@ -1,9 +1,8 @@
 // app/register/page.jsx
 "use client";
 
-// ✅ Force this route to be dynamic (server-rendered)
+// ✅ CRITICAL: This forces Vercel to include this route in production
 export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
 
 import { useState } from "react";
 import Image from "next/image";
