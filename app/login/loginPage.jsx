@@ -25,7 +25,7 @@ export default function LoginPage() {
         alert("Login Successful!");
 
         // redirect to dashboard
-        window.location.href = "/dashboard";
+        window.location.href = "/Dashboard";
       },
       onError: (error) => {
         console.error("Login error:", error.message);
