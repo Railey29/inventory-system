@@ -1,8 +1,9 @@
 // app/register/page.jsx
 "use client";
 
-// CRITICAL: This forces Vercel to include this route in production
+// ✅ Force this route to be dynamic (server-rendered)
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 import { useState } from "react";
 import Image from "next/image";
@@ -10,7 +11,7 @@ import Image from "next/image";
 import WelcomeIcon from "../components/WelcomeIcon";
 import RegisterHeader from "../components/RegisterHeader";
 import RegisterForm from "../components/RegisterForm";
-import { handleFormSubmit } from "../utils/formHandlers"; // ✅ Keep this
+import { handleFormSubmit } from "../utils/formHandlers";
 import { handleSubmitRegister } from "../controller/registerController";
 
 export default function RegisterPage() {
@@ -29,7 +30,7 @@ export default function RegisterPage() {
 
     handleFormSubmit({
       e,
-      controllerFn: handleSubmitRegister, // ✅ Now it's imported
+      controllerFn: handleSubmitRegister,
       data: { name, email, password, role },
       setLoading,
       onSuccess: (response) => {
