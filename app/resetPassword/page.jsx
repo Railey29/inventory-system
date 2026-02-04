@@ -1,6 +1,7 @@
 // app/reset-password/page.jsx
 "use client";
 
+import { Suspense } from "react";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -10,7 +11,10 @@ import ResetPasswordHeader from "../components/ResetPasswordHeader";
 import { handleResetPassword } from "../controller/resetPasswordController";
 import { handleFormSubmit } from "../utils/formHandlers";
 
-export default function ResetPasswordPage() {
+// ✅ Force dynamic rendering to avoid pre-rendering issues
+export const dynamic = "force-dynamic";
+
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -136,5 +140,19 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center bg-gray-50">
+          <div className="text-gray-600">Loading...</div>
+        </div>
+      }
+    >
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
