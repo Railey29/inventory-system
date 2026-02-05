@@ -73,18 +73,18 @@ export default function Sidebar({
       {/* Sidebar */}
       <aside
         className={`fixed left-0 top-14 sm:top-16 h-full border-r transition-all duration-300 z-20 overflow-hidden ${
-          sidebarOpen ? "w-64" : "w-0"
+          sidebarOpen ? "w-64 sm:w-72 lg:w-64" : "w-0"
         } ${
           darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
         }`}
       >
         {sidebarOpen && (
-          <nav className="p-3 sm:p-4 space-y-1 sm:space-y-2 h-full overflow-y-auto pb-20">
+          <nav className="p-4 sm:p-5 lg:p-4 space-y-2 h-full overflow-y-auto pb-20">
             {menuItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleMenuClick(item.id, item.path)}
-                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-all text-sm sm:text-base ${
+                className={`w-full flex items-center space-x-3 sm:space-x-4 lg:space-x-3 px-4 sm:px-5 lg:px-4 py-3 sm:py-3.5 lg:py-3 rounded-lg transition-all text-base sm:text-lg lg:text-base ${
                   activeTab === item.id
                     ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/30"
                     : darkMode
@@ -92,13 +92,15 @@ export default function Sidebar({
                       : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
-                <item.icon size={18} className="sm:w-5 sm:h-5 flex-shrink-0" />
-                <span className="font-medium truncate">{item.label}</span>
+                <item.icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-5 lg:h-5 flex-shrink-0" />
+                <span className="font-medium whitespace-nowrap">
+                  {item.label}
+                </span>
               </button>
             ))}
 
             <div
-              className={`pt-3 sm:pt-4 mt-3 sm:mt-4 border-t ${
+              className={`pt-4 mt-4 border-t ${
                 darkMode ? "border-gray-700" : "border-gray-200"
               }`}
             >
@@ -114,13 +116,13 @@ export default function Sidebar({
                     onError: (err) => alert(err.message),
                   })
                 }
-                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-all text-sm sm:text-base cursor-pointer ${
+                className={`w-full flex items-center space-x-3 sm:space-x-4 lg:space-x-3 px-4 sm:px-5 lg:px-4 py-3 sm:py-3.5 lg:py-3 rounded-lg transition-all text-base sm:text-lg lg:text-base cursor-pointer ${
                   darkMode
                     ? "text-red-400 hover:bg-red-900/20"
                     : "text-red-600 hover:bg-red-50"
                 }`}
               >
-                <LogOut size={18} className="sm:w-5 sm:h-5 flex-shrink-0" />
+                <LogOut className="w-5 h-5 sm:w-6 sm:h-6 lg:w-5 lg:h-5 flex-shrink-0" />
                 <span className="font-medium">Logout</span>
               </button>
             </div>

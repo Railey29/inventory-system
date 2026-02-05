@@ -17,13 +17,12 @@ export default function LoginPage() {
   const onSubmit = (e) => {
     handleFormSubmit({
       e,
-      controllerFn: handleSubmitLogin, // client-side login controller
+      controllerFn: handleSubmitLogin,
       data: { email, password },
       setLoading,
       onSuccess: async (response) => {
         console.log("Logged in user:", response.user);
         alert("Login Successful!");
-        // redirect to dashboard
         window.location.href = "/dashboard";
       },
       onError: (error) => {
@@ -37,12 +36,14 @@ export default function LoginPage() {
     <div className="flex h-screen font-inter overflow-hidden">
       <WelcomeIcon />
 
-      <div className="w-full md:w-1/2 bg-white flex flex-col items-center justify-center p-8 overflow-y-auto">
+      {/* MOBILE DARK | DESKTOP WHITE */}
+      <div className="w-full md:w-1/2 bg-[#020617] md:bg-white flex flex-col items-center justify-center p-8 overflow-y-auto transition-colors duration-300">
         <div className="w-full max-w-md">
+          {/* MOBILE LOGO */}
           <div className="md:hidden text-center mb-4">
             <div className="mb-2 w-full max-w-md drop-shadow-2xl mt-10 hover:scale-105 transition-transform duration-300 ease-in-out animate__animated animate__fadeInDown animate__slow">
               <Image
-                src="/logo2.png"
+                src="/logo.png"
                 alt="Company Logo"
                 width={400}
                 height={400}
@@ -52,10 +53,12 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* HEADER */}
           <div className="animate__animated animate__fadeInDown animate__slow mb-2">
             <LoginHeader />
           </div>
 
+          {/* FORM */}
           <div className="animate__animated animate__fadeInUp animate__slow mb-4">
             <LoginForm
               email={email}

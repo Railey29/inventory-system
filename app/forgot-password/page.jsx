@@ -35,10 +35,11 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex h-screen font-inter overflow-hidden bg-gray-50">
+    <div className="flex h-screen font-inter overflow-hidden">
       <WelcomeIcon />
 
-      <div className="w-full md:w-1/2 bg-white flex flex-col items-center justify-center p-8 overflow-y-auto">
+      {/* 📱 MOBILE DARK | 💻 DESKTOP WHITE */}
+      <div className="w-full md:w-1/2 bg-[#020617] md:bg-white flex flex-col items-center justify-center p-8 overflow-y-auto transition-colors duration-300">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="md:hidden text-center mb-4">
@@ -59,7 +60,7 @@ export default function ForgotPasswordPage() {
             <ResetPasswordHeader />
           </div>
 
-          {/* Reset Password Form */}
+          {/* Form */}
           <div className="animate__animated animate__fadeInUp animate__slow mb-4">
             <ForgotPasswordForm
               email={email}
@@ -70,7 +71,7 @@ export default function ForgotPasswordPage() {
 
             {/* Success Message */}
             {success && (
-              <p className="text-green-600 text-center mt-4 font-medium">
+              <p className="text-green-500 text-center mt-4 font-medium">
                 {success}
               </p>
             )}

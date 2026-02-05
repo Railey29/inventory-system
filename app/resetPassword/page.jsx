@@ -24,19 +24,15 @@ function ResetPasswordContent() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Get the token from URL
   const token = searchParams.get("token");
   const type = searchParams.get("type");
 
-  // ✅ Check validity directly, no useEffect
   const isValidResetLink = token && type === "recovery";
 
   const onSubmit = (e) => {
-    // Clear previous messages
     setError("");
     setSuccess("");
 
-    // Validation
     if (newPassword.length < 6) {
       setError("Password must be at least 6 characters");
       return;
@@ -47,7 +43,6 @@ function ResetPasswordContent() {
       return;
     }
 
-    // Use the utility function
     handleFormSubmit({
       e,
       controllerFn: handleResetPassword,
@@ -67,16 +62,17 @@ function ResetPasswordContent() {
   };
 
   return (
-    <div className="flex h-screen font-inter overflow-hidden bg-gray-50">
+    <div className="flex h-screen font-inter overflow-hidden">
       <WelcomeIcon />
 
-      <div className="w-full md:w-1/2 bg-white flex flex-col items-center justify-center p-8 overflow-y-auto">
+      {/* 📱 MOBILE DARK | 💻 DESKTOP WHITE */}
+      <div className="w-full md:w-1/2 bg-[#020617] md:bg-white flex flex-col items-center justify-center p-8 overflow-y-auto transition-colors duration-300">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="md:hidden text-center mb-4">
             <div className="mb-2 w-full max-w-md drop-shadow-2xl mt-10 hover:scale-105 transition-transform duration-300 ease-in-out animate__animated animate__fadeInDown animate__slow">
               <Image
-                src="/logo2.png"
+                src="/logo.png"
                 alt="Company Logo"
                 width={400}
                 height={400}
@@ -91,28 +87,28 @@ function ResetPasswordContent() {
             <ResetPasswordHeader />
           </div>
 
-          {/* ✅ Show error if invalid reset link */}
+          {/* Invalid link */}
           {!isValidResetLink && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg animate__animated animate__fadeIn">
               Invalid or expired reset link
             </div>
           )}
 
-          {/* Error Message from form validation */}
+          {/* Error */}
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg animate__animated animate__fadeIn">
               {error}
             </div>
           )}
 
-          {/* Success Message */}
+          {/* Success */}
           {success && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg animate__animated animate__fadeIn">
               {success}
             </div>
           )}
 
-          {/* ✅ Show form only if valid reset link and no success */}
+          {/* Form */}
           {isValidResetLink && !success && (
             <div className="animate__animated animate__fadeInUp animate__slow">
               <ResetPasswordFormComponent
@@ -126,12 +122,12 @@ function ResetPasswordContent() {
             </div>
           )}
 
-          {/* Back to Login Link */}
+          {/* Back button */}
           {!isValidResetLink && (
             <div className="mt-4 text-center animate__animated animate__fadeIn">
               <button
                 onClick={() => router.push("/")}
-                className="text-blue-600 hover:text-blue-700 font-medium transition"
+                className="text-blue-500 hover:text-blue-600 font-medium transition"
               >
                 Back to Login
               </button>
@@ -147,8 +143,8 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-screen items-center justify-center bg-gray-50">
-          <div className="text-gray-600">Loading...</div>
+        <div className="flex h-screen items-center justify-center bg-[#020617] md:bg-gray-50">
+          <div className="text-gray-300 md:text-gray-600">Loading...</div>
         </div>
       }
     >

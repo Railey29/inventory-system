@@ -173,26 +173,26 @@ export default function Page() {
 
           {/* Items Table */}
           <div
-            className={`rounded-xl shadow-lg overflow-hidden border animate__animated animate__fadeInUp ${
+            className={`rounded-xl shadow-lg overflow-x-auto overflow-y-auto border animate__animated animate__fadeInUp max-h-[600px] ${
               darkMode
                 ? "bg-gray-800 border-gray-700"
                 : "bg-white border-gray-200"
             }`}
           >
-            <table className="min-w-full">
+            <table className="min-w-full w-full">
               <thead
-                className={
+                className={`sticky top-0 z-10 ${
                   darkMode
                     ? "bg-gray-700/50 border-b border-gray-600"
                     : "bg-gray-50 border-b border-gray-200"
-                }
+                }`}
               >
                 <tr>
                   {["Item Name", "Quantity", "Last Date", "Last Time"].map(
                     (head) => (
                       <th
                         key={head}
-                        className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider ${
+                        className={`px-3 sm:px-4 md:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider whitespace-nowrap ${
                           darkMode ? "text-gray-300" : "text-gray-700"
                         }`}
                       >
@@ -211,19 +211,19 @@ export default function Page() {
                   <tr>
                     <td
                       colSpan={4}
-                      className={`px-4 sm:px-6 py-16 text-center ${
+                      className={`px-4 sm:px-6 py-12 sm:py-16 text-center ${
                         darkMode ? "text-gray-400" : "text-gray-500"
                       }`}
                     >
                       <PackageX
-                        className={`w-16 h-16 mx-auto mb-4 animate__animated animate__bounce animate__infinite animate__slow ${
+                        className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 animate__animated animate__bounce animate__infinite animate__slow ${
                           darkMode ? "text-gray-600" : "text-gray-300"
                         }`}
                       />
-                      <p className="text-lg font-medium mb-1">
+                      <p className="text-base sm:text-lg font-medium mb-1">
                         No out-of-stock items
                       </p>
-                      <p className="text-sm opacity-75">
+                      <p className="text-xs sm:text-sm opacity-75">
                         All items are currently in stock
                       </p>
                     </td>
@@ -238,7 +238,7 @@ export default function Page() {
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
                       <td
-                        className={`px-4 sm:px-6 py-4 whitespace-nowrap font-semibold ${
+                        className={`px-3 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap font-semibold text-sm sm:text-base ${
                           darkMode ? "text-gray-200" : "text-gray-900"
                         }`}
                       >
@@ -254,12 +254,12 @@ export default function Page() {
                         </div>
                       </td>
                       <td
-                        className={`px-4 sm:px-6 py-4 whitespace-nowrap ${
+                        className={`px-3 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap ${
                           darkMode ? "text-gray-300" : "text-gray-700"
                         }`}
                       >
                         <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                          className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold ${
                             item.quantity <= 5
                               ? darkMode
                                 ? "bg-red-500/20 text-red-400 border border-red-500/30"
@@ -270,20 +270,20 @@ export default function Page() {
                           }`}
                         >
                           {item.quantity <= 5 && (
-                            <AlertTriangle className="w-3.5 h-3.5 animate__animated animate__headShake animate__infinite animate__slow" />
+                            <AlertTriangle className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate__animated animate__headShake animate__infinite animate__slow" />
                           )}
                           {item.quantity} units
                         </span>
                       </td>
                       <td
-                        className={`px-4 sm:px-6 py-4 whitespace-nowrap ${
+                        className={`px-3 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap text-sm sm:text-base ${
                           darkMode ? "text-gray-300" : "text-gray-700"
                         }`}
                       >
                         {item.lastDate}
                       </td>
                       <td
-                        className={`px-4 sm:px-6 py-4 whitespace-nowrap ${
+                        className={`px-3 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap text-sm sm:text-base ${
                           darkMode ? "text-gray-300" : "text-gray-700"
                         }`}
                       >

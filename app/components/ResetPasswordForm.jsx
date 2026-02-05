@@ -12,7 +12,7 @@ export default function ResetPasswordFormComponent({
     <form onSubmit={onSubmit} className="space-y-4">
       {/* New Password */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-300 md:text-gray-700 mb-1">
           New Password
         </label>
         <input
@@ -21,20 +21,24 @@ export default function ResetPasswordFormComponent({
           onChange={(e) => setNewPassword(e.target.value)}
           required
           placeholder="Enter new password"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+          className="w-full px-4 py-2 border rounded-lg
+            border-gray-600 md:border-gray-300
+            bg-gray-800 md:bg-white
+            text-white md:text-black
+            focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           disabled={loading}
           minLength={8}
           pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$"
           title="Password must contain at least 8 characters, including uppercase, lowercase, and numbers"
         />
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-gray-400 md:text-gray-500 mt-1">
           At least 8 characters with uppercase, lowercase, and numbers
         </p>
       </div>
 
       {/* Confirm Password */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-300 md:text-gray-700 mb-1">
           Confirm Password
         </label>
         <input
@@ -43,7 +47,11 @@ export default function ResetPasswordFormComponent({
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
           placeholder="Confirm new password"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+          className="w-full px-4 py-2 border rounded-lg
+            border-gray-600 md:border-gray-300
+            bg-gray-800 md:bg-white
+            text-white md:text-black
+            focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           disabled={loading}
           minLength={8}
           pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$"

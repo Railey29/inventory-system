@@ -43,12 +43,14 @@ export default function RegisterPage() {
     <div className="flex h-screen font-inter overflow-hidden">
       <WelcomeIcon />
 
-      <div className="w-full md:w-1/2 bg-white flex flex-col items-center justify-center p-8 overflow-y-auto">
+      {/* 📱 MOBILE DARK | 💻 DESKTOP WHITE */}
+      <div className="w-full md:w-1/2 bg-[#020617] md:bg-white flex flex-col items-center justify-center p-8 overflow-y-auto transition-colors duration-300">
         <div className="w-full max-w-md">
+          {/* Mobile Logo */}
           <div className="md:hidden text-center mb-4">
             <div className="mb-2 w-full max-w-md drop-shadow-2xl mt-10 hover:scale-105 transition-transform duration-300 ease-in-out animate__animated animate__fadeInDown animate__slow">
               <Image
-                src="/logo2.png"
+                src="/logo.png"
                 alt="Company Logo"
                 width={400}
                 height={400}
@@ -58,10 +60,12 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          {/* Header */}
           <div className="animate__animated animate__fadeInDown animate__slow mb-2">
             <RegisterHeader />
           </div>
 
+          {/* Form */}
           <div className="animate__animated animate__fadeInUp animate__slow mb-4">
             <RegisterForm
               name={name}
