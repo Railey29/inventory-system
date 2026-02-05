@@ -16,23 +16,34 @@ export default function Sidebar({
   activeTab,
   setActiveTab,
   setSidebarOpen,
+  darkMode,
 }) {
   const router = useRouter();
 
   const menuItems = [
-    { id: "overview", label: "Overview", icon: BarChart3, path: "/dashboard" },
-    { id: "products", label: "Products", icon: Package, path: "/products" },
     {
-      id: "categories",
-      label: "Categories",
-      icon: FolderOpen,
-      path: "/categories",
+      id: "Dashboard",
+      label: "Dashboard",
+      icon: BarChart3,
+      path: "/dashboard",
     },
     {
-      id: "logs",
-      label: "Inventory Logs",
+      id: "Parcel Shipped",
+      label: "Parcel Shipped",
+      icon: Package,
+      path: "/parcel-shipped",
+    },
+    {
+      id: "Parcel Delivery",
+      label: "Parcel Delivery",
+      icon: FolderOpen,
+      path: "/parcel-delivery",
+    },
+    {
+      id: "Out of Stock",
+      label: "Out of Stock",
       icon: Activity,
-      path: "/inventory-logs",
+      path: "/out-of-stock",
     },
     { id: "users", label: "Users", icon: Users, path: "/users" },
   ];
@@ -61,8 +72,10 @@ export default function Sidebar({
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-14 sm:top-16 h-full bg-white border-r border-gray-200 transition-all duration-300 z-20 overflow-hidden ${
+        className={`fixed left-0 top-14 sm:top-16 h-full border-r transition-all duration-300 z-20 overflow-hidden ${
           sidebarOpen ? "w-64" : "w-0"
+        } ${
+          darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
         }`}
       >
         {sidebarOpen && (
@@ -73,8 +86,10 @@ export default function Sidebar({
                 onClick={() => handleMenuClick(item.id, item.path)}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-all text-sm sm:text-base ${
                   activeTab === item.id
-                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/30"
+                    : darkMode
+                      ? "text-gray-300 hover:bg-gray-700"
+                      : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
                 <item.icon size={18} className="sm:w-5 sm:h-5 flex-shrink-0" />
@@ -82,7 +97,11 @@ export default function Sidebar({
               </button>
             ))}
 
-            <div className="pt-3 sm:pt-4 mt-3 sm:mt-4 border-t border-gray-200">
+            <div
+              className={`pt-3 sm:pt-4 mt-3 sm:mt-4 border-t ${
+                darkMode ? "border-gray-700" : "border-gray-200"
+              }`}
+            >
               <button
                 onClick={(e) =>
                   handleFormSubmit({
@@ -95,7 +114,11 @@ export default function Sidebar({
                     onError: (err) => alert(err.message),
                   })
                 }
-                className="w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all text-sm sm:text-base cursor-pointer"
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-all text-sm sm:text-base cursor-pointer ${
+                  darkMode
+                    ? "text-red-400 hover:bg-red-900/20"
+                    : "text-red-600 hover:bg-red-50"
+                }`}
               >
                 <LogOut size={18} className="sm:w-5 sm:h-5 flex-shrink-0" />
                 <span className="font-medium">Logout</span>
