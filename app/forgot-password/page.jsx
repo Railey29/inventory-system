@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
           <div className="md:hidden text-center mb-4">
             <div className="mb-2 w-full max-w-md drop-shadow-2xl mt-10 hover:scale-105 transition-transform duration-300 ease-in-out animate__animated animate__fadeInDown animate__slow">
               <Image
-                src="/logo2.png"
+                src="/logo.png"
                 alt="Company Logo"
                 width={400}
                 height={400}
