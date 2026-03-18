@@ -344,7 +344,7 @@ export default function page() {
             >
               <div className="flex items-center gap-2 mb-4">
                 <CalendarDays className="w-5 h-5" />
-                <h2 className="text-lg font-semibold">Calendar Filters & Sorting</h2>
+                <h2 className="text-lg font-semibold">Calendar</h2>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
