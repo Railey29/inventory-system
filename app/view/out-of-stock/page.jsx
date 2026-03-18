@@ -19,9 +19,7 @@ import Link from "next/link";
 import "animate.css";
 
 // Import controllers
-import {
-  fetchProductInController,
-} from "../../controller/productController";
+import { fetchProductInController } from "../../controller/productController";
 import { fetchParcelItems } from "../../utils/parcelShippedHelper";
 import { useAuth } from "../../hook/useAuth";
 import { isAdminRole } from "../../utils/roleHelper";
@@ -30,6 +28,8 @@ import {
   buildProductCode,
   buildSku,
 } from "../../utils/inventoryMeta";
+
+const DESCRIPTION_STORAGE_KEY = "inventoryDescriptions";
 
 export default function Page() {
   const searchParams = useSearchParams();
@@ -58,11 +58,79 @@ export default function Page() {
   const [exportError, setExportError] = useState("");
   const [parcelSearch, setParcelSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
+
+  // Description states
+  const [expandedDescriptions, setExpandedDescriptions] = useState({});
+  const [customDescriptions, setCustomDescriptions] = useState({});
+  const [editingDescriptionKey, setEditingDescriptionKey] = useState(null);
+  const [draftDescription, setDraftDescription] = useState("");
+
   const { role } = useAuth();
   const isAdmin = isAdminRole(role);
 
   const parcelTableRef = useRef(null);
   const productTableRef = useRef(null);
+
+  const getParcelRowKey = (item) => {
+    return `parcel-${buildSku(item)}-${buildProductCode(item, "CMP")}-${item.name || "unknown"}`;
+  };
+
+  const getProductRowKey = (item) => {
+    return `product-${buildSku(item)}-${buildProductCode(item)}-${item.product_name || "unknown"}`;
+  };
+
+  const toggleDescription = (key) => {
+    setExpandedDescriptions((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const getItemDescription = (item, key) => {
+    const savedDescription = customDescriptions[key];
+    if (typeof savedDescription === "string" && savedDescription.trim()) {
+      return savedDescription;
+    }
+
+    if (typeof item.description === "string" && item.description.trim()) {
+      return item.description;
+    }
+
+    return buildDescription(item);
+  };
+
+  const saveCustomDescription = (key, value) => {
+    const trimmedValue = value.trim();
+
+    setCustomDescriptions((prev) => {
+      const next = { ...prev };
+
+      if (trimmedValue) {
+        next[key] = trimmedValue;
+      } else {
+        delete next[key];
+      }
+
+      localStorage.setItem(DESCRIPTION_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const handleEditDescription = (item, key) => {
+    setEditingDescriptionKey(key);
+    setDraftDescription(getItemDescription(item, key));
+  };
+
+  const handleSaveDescription = (key) => {
+    saveCustomDescription(key, draftDescription);
+    setEditingDescriptionKey(null);
+    setDraftDescription("");
+  };
+
+  const handleCancelDescription = () => {
+    setEditingDescriptionKey(null);
+    setDraftDescription("");
+  };
 
   // Helper to get stock status
   const getStockStatus = (quantity) => {
@@ -130,6 +198,19 @@ export default function Page() {
   useEffect(() => {
     const savedDarkMode = localStorage.getItem("darkMode");
     if (savedDarkMode !== null) setDarkMode(savedDarkMode === "true");
+
+    const savedDescriptions = localStorage.getItem(DESCRIPTION_STORAGE_KEY);
+    if (savedDescriptions) {
+      try {
+        const parsed = JSON.parse(savedDescriptions);
+        if (parsed && typeof parsed === "object") {
+          setCustomDescriptions(parsed);
+        }
+      } catch (error) {
+        console.error("Failed to parse saved descriptions:", error);
+      }
+    }
+
     loadItems();
   }, []);
 
@@ -183,7 +264,15 @@ export default function Page() {
     const code = buildProductCode(item, "CMP").toLowerCase();
     const sku = buildSku(item).toLowerCase();
     const name = (item.name || "").toLowerCase();
-    return statusMatch && (name.includes(keyword) || code.includes(keyword) || sku.includes(keyword));
+    const description = getItemDescription(item, getParcelRowKey(item)).toLowerCase();
+
+    return (
+      statusMatch &&
+      (name.includes(keyword) ||
+        code.includes(keyword) ||
+        sku.includes(keyword) ||
+        description.includes(keyword))
+    );
   });
 
   // Filter product items based on selected status
@@ -196,7 +285,15 @@ export default function Page() {
     const code = buildProductCode(item).toLowerCase();
     const sku = buildSku(item).toLowerCase();
     const name = (item.product_name || "").toLowerCase();
-    return statusMatch && (name.includes(keyword) || code.includes(keyword) || sku.includes(keyword));
+    const description = getItemDescription(item, getProductRowKey(item)).toLowerCase();
+
+    return (
+      statusMatch &&
+      (name.includes(keyword) ||
+        code.includes(keyword) ||
+        sku.includes(keyword) ||
+        description.includes(keyword))
+    );
   });
 
   // Count parcel items by status
@@ -252,7 +349,7 @@ export default function Page() {
       body: parcelTableRows,
       theme: "grid",
       styles: { fontSize: 10 },
-      headStyles: { fillColor: [30, 64, 175] }, // Blue
+      headStyles: { fillColor: [30, 64, 175] },
     });
 
     // Product Section
@@ -279,7 +376,7 @@ export default function Page() {
       body: productTableRows,
       theme: "grid",
       styles: { fontSize: 10 },
-      headStyles: { fillColor: [124, 58, 237] }, // Purple
+      headStyles: { fillColor: [124, 58, 237] },
     });
 
     doc.save("inventory-report.pdf");
@@ -299,6 +396,76 @@ export default function Page() {
     const productSnapshot = [...productItems];
     exportToPDF(parcelSnapshot, productSnapshot);
     setShowExportModal(false);
+  };
+
+  const renderDescriptionText = (item, rowKey) => {
+    const description = getItemDescription(item, rowKey);
+    const isExpanded = !!expandedDescriptions[rowKey];
+    const isEditing = editingDescriptionKey === rowKey;
+
+    if (isEditing) {
+      return (
+        <div className="flex flex-col gap-2">
+          <textarea
+            value={draftDescription}
+            onChange={(e) => setDraftDescription(e.target.value)}
+            rows={3}
+            className={`w-full rounded-md border px-3 py-2 text-sm resize-none ${
+              darkMode
+                ? "bg-[#111827] border-[#374151] text-white"
+                : "bg-white border-[#D1D5DB] text-black"
+            }`}
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => handleSaveDescription(rowKey)}
+              className="text-xs px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={handleCancelDescription}
+              className="text-xs px-3 py-1 rounded bg-gray-300 text-black hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={() => toggleDescription(rowKey)}
+          title="Click to expand"
+          className={`block text-left w-full ${
+            darkMode ? "text-white" : "text-black"
+          }`}
+        >
+          <span
+            className={
+              isExpanded
+                ? "whitespace-normal break-words"
+                : "block overflow-hidden text-ellipsis whitespace-nowrap"
+            }
+          >
+            {description}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleEditDescription(item, rowKey)}
+          className="text-xs text-blue-600 hover:underline mt-1 text-left"
+        >
+          Edit description
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -437,7 +604,6 @@ export default function Page() {
 
               {/* Parcel Status Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                {/* Out of Stock */}
                 <div
                   onClick={() => setFilterParcelStatus("out")}
                   className={`p-3 sm:p-4 rounded-xl border cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl group ${
@@ -469,7 +635,6 @@ export default function Page() {
                   <p className="text-2xl font-bold">{parcelStatusCounts.out}</p>
                 </div>
 
-                {/* Critical Level */}
                 <div
                   onClick={() => setFilterParcelStatus("critical")}
                   className={`p-3 sm:p-4 rounded-xl border cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl group ${
@@ -503,7 +668,6 @@ export default function Page() {
                   </p>
                 </div>
 
-                {/* Low Stock */}
                 <div
                   onClick={() => setFilterParcelStatus("low")}
                   className={`p-3 sm:p-4 rounded-xl border cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl group ${
@@ -535,7 +699,6 @@ export default function Page() {
                   <p className="text-2xl font-bold">{parcelStatusCounts.low}</p>
                 </div>
 
-                {/* Available */}
                 <div
                   onClick={() => setFilterParcelStatus("available")}
                   className={`p-3 sm:p-4 rounded-xl border cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl group ${
@@ -691,64 +854,70 @@ export default function Page() {
                           </td>
                         </tr>
                       ) : (
-                        filteredParcelItems.map((item, index) => (
-                          <tr
-                            key={index}
-                            className={`transition-colors ${
-                              darkMode
-                                ? "hover:bg-[#374151]"
-                                : "hover:bg-[#F9FAFB]"
-                            }`}
-                          >
-                            <td className="px-4 py-3 text-sm font-medium align-top">
-                              <div className="flex items-start gap-2 min-w-0">
-                                <div
-                                  className={`w-2 h-2 rounded-full ${getIndicatorColor(
+                        filteredParcelItems.map((item, index) => {
+                          const rowKey = getParcelRowKey(item);
+
+                          return (
+                            <tr
+                              key={index}
+                              className={`transition-colors ${
+                                darkMode
+                                  ? "hover:bg-[#374151]"
+                                  : "hover:bg-[#F9FAFB]"
+                              }`}
+                            >
+                              <td className="px-4 py-3 text-sm font-medium align-top">
+                                <div className="flex items-start gap-2 min-w-0">
+                                  <div
+                                    className={`w-2 h-2 rounded-full ${getIndicatorColor(
+                                      item.quantity,
+                                    )}`}
+                                  />
+                                  <span className="break-words whitespace-normal">
+                                    {item.name}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                {buildProductCode(item, "CMP")}
+                              </td>
+                              <td className="px-4 py-3 text-sm">{buildSku(item)}</td>
+                              <td className="px-4 py-3 text-sm align-top">
+                                <div className="max-w-[220px]">
+                                  {renderDescriptionText(item, rowKey)}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                {item.quantity} units
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                <span
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
                                     item.quantity,
+                                    darkMode,
                                   )}`}
-                                />
-                                <span className="break-words whitespace-normal">
-                                  {item.name}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              {buildProductCode(item, "CMP")}
-                            </td>
-                            <td className="px-4 py-3 text-sm">{buildSku(item)}</td>
-                            <td className="px-4 py-3 text-sm">
-                              {buildDescription(item)}
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              {item.quantity} units
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                                  item.quantity,
-                                  darkMode,
-                                )}`}
-                              >
-                                {getStatusIcon(item.quantity)}
-                                {getStatusLabel(item.quantity)}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-sm">{item.date}</td>
-                            <td className="px-4 py-3 text-sm">
-                              {item.quantity === 0 ? (
-                                <Link
-                                  href={`/view/parcel-shipped?item=${encodeURIComponent(item.name)}`}
                                 >
-                                  <div className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer w-fit">
-                                    Add Stock
-                                  </div>
-                                </Link>
-                              ) : (
-                                "-"
-                              )}
-                            </td>
-                          </tr>
-                        ))
+                                  {getStatusIcon(item.quantity)}
+                                  {getStatusLabel(item.quantity)}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-sm">{item.date}</td>
+                              <td className="px-4 py-3 text-sm">
+                                {item.quantity === 0 ? (
+                                  <Link
+                                    href={`/view/parcel-shipped?item=${encodeURIComponent(item.name)}`}
+                                  >
+                                    <div className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer w-fit">
+                                      Add Stock
+                                    </div>
+                                  </Link>
+                                ) : (
+                                  "-"
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
@@ -765,7 +934,6 @@ export default function Page() {
 
               {/* Product Status Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                {/* Out of Stock */}
                 <div
                   onClick={() => setFilterProductStatus("out")}
                   className={`p-3 sm:p-4 rounded-xl border cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl group ${
@@ -799,7 +967,6 @@ export default function Page() {
                   </p>
                 </div>
 
-                {/* Critical Level */}
                 <div
                   onClick={() => setFilterProductStatus("critical")}
                   className={`p-3 sm:p-4 rounded-xl border cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl group ${
@@ -833,7 +1000,6 @@ export default function Page() {
                   </p>
                 </div>
 
-                {/* Low Stock */}
                 <div
                   onClick={() => setFilterProductStatus("low")}
                   className={`p-3 sm:p-4 rounded-xl border cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl group ${
@@ -867,7 +1033,6 @@ export default function Page() {
                   </p>
                 </div>
 
-                {/* Available */}
                 <div
                   onClick={() => setFilterProductStatus("available")}
                   className={`p-3 sm:p-4 rounded-xl border cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl group ${
@@ -1023,62 +1188,68 @@ export default function Page() {
                           </td>
                         </tr>
                       ) : (
-                        filteredProductItems.map((item, index) => (
-                          <tr
-                            key={index}
-                            className={`transition-colors ${
-                              darkMode
-                                ? "hover:bg-[#374151]"
-                                : "hover:bg-[#F9FAFB]"
-                            }`}
-                          >
-                            <td className="px-4 py-3 text-sm font-medium align-top">
-                              <div className="flex items-start gap-2 min-w-0">
-                                <div
-                                  className={`w-2 h-2 rounded-full ${getIndicatorColor(
+                        filteredProductItems.map((item, index) => {
+                          const rowKey = getProductRowKey(item);
+
+                          return (
+                            <tr
+                              key={index}
+                              className={`transition-colors ${
+                                darkMode
+                                  ? "hover:bg-[#374151]"
+                                  : "hover:bg-[#F9FAFB]"
+                              }`}
+                            >
+                              <td className="px-4 py-3 text-sm font-medium align-top">
+                                <div className="flex items-start gap-2 min-w-0">
+                                  <div
+                                    className={`w-2 h-2 rounded-full ${getIndicatorColor(
+                                      item.quantity,
+                                    )}`}
+                                  />
+                                  <span className="break-words whitespace-normal">
+                                    {item.product_name}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                {buildProductCode(item)}
+                              </td>
+                              <td className="px-4 py-3 text-sm">{buildSku(item)}</td>
+                              <td className="px-4 py-3 text-sm align-top">
+                                <div className="max-w-[220px]">
+                                  {renderDescriptionText(item, rowKey)}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                {item.quantity} units
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                <span
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
                                     item.quantity,
+                                    darkMode,
                                   )}`}
-                                />
-                                <span className="break-words whitespace-normal">
-                                  {item.product_name}
+                                >
+                                  {getStatusIcon(item.quantity)}
+                                  {getStatusLabel(item.quantity)}
                                 </span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              {buildProductCode(item)}
-                            </td>
-                            <td className="px-4 py-3 text-sm">{buildSku(item)}</td>
-                            <td className="px-4 py-3 text-sm">
-                              {buildDescription(item)}
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              {item.quantity} units
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                                  item.quantity,
-                                  darkMode,
-                                )}`}
-                              >
-                                {getStatusIcon(item.quantity)}
-                                {getStatusLabel(item.quantity)}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-sm">{item.date}</td>
-                            <td className="px-4 py-3 text-sm">
-                              {item.quantity === 0 ? (
-                                <Link href={`/view/product-in?product=${encodeURIComponent(item.product_name)}`}>
-                                  <div className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
-                                    Add Stock
-                                  </div>
-                                </Link>
-                              ) : (
-                                "-"
-                              )}
-                            </td>
-                          </tr>
-                        ))
+                              </td>
+                              <td className="px-4 py-3 text-sm">{item.date}</td>
+                              <td className="px-4 py-3 text-sm">
+                                {item.quantity === 0 ? (
+                                  <Link href={`/view/product-in?product=${encodeURIComponent(item.product_name)}`}>
+                                    <div className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
+                                      Add Stock
+                                    </div>
+                                  </Link>
+                                ) : (
+                                  "-"
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
@@ -1087,6 +1258,7 @@ export default function Page() {
             </div>
           </div>
         </div>
+
         {showExportModal && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <div
@@ -1142,4 +1314,3 @@ export default function Page() {
     </AuthGuard>
   );
 }
-

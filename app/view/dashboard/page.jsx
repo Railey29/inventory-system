@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "../../components/Sidebar";
 import TopNavbar from "../../components/TopNavbar";
@@ -16,6 +16,8 @@ import {
   TrendingDown,
   Box,
   Boxes,
+  CalendarDays,
+  Filter,
 } from "lucide-react";
 import "animate.css";
 
@@ -36,43 +38,29 @@ export default function page() {
   const [parcelDelivery, setParcelDelivery] = useState([]);
   const [stockItems, setStockItems] = useState([]); // Items from parcel_in
 
-  const [parcelShippedCount, setParcelShippedCount] = useState(0);
-  const [parcelDeliveryCount, setParcelDeliveryCount] = useState(0);
-
   // Product IN/OUT states
   const [productIn, setProductIn] = useState([]);
   const [productOut, setProductOut] = useState([]);
-  const [productInCount, setProductInCount] = useState(0);
-  const [productOutCount, setProductOutCount] = useState(0);
 
-  // Stock status counts (for parcel items)
-  const [statusCounts, setStatusCounts] = useState({
-    out: 0,
-    critical: 0,
-    low: 0,
-    available: 0,
-  });
-
-  // Product status counts
-  const [productStatusCounts, setProductStatusCounts] = useState({
-    out: 0,
-    critical: 0,
-    low: 0,
-    available: 0,
-  });
+  // Search
   const [inventorySearch, setInventorySearch] = useState("");
 
-  const router = useRouter();
+  // Calendar filter states
+  const [calendarView, setCalendarView] = useState("month"); // day | week | month
+  const [selectedDate, setSelectedDate] = useState(() => {
+    return new Date().toISOString().slice(0, 10);
+  });
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [selectedWeek, setSelectedWeek] = useState(() => {
+    const today = new Date();
+    const weekNumber = getISOWeek(today);
+    return `${today.getFullYear()}-W${String(weekNumber).padStart(2, "0")}`;
+  });
 
-  // Helper to convert 24-hour time to 12-hour format
-  const convertTo12Hour = (time24) => {
-    if (!time24) return "";
-    const [hours, minutes] = time24.split(":");
-    const hour = parseInt(hours, 10);
-    const period = hour >= 12 ? "PM" : "AM";
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${period}`;
-  };
+  const router = useRouter();
 
   // Helper to get stock status
   const getStockStatus = (quantity) => {
@@ -121,57 +109,169 @@ export default function page() {
     return <Box className="w-4 h-4" />;
   };
 
+  // Date helpers
+  function parseLocalDate(dateString) {
+    if (!dateString) return null;
+    const parts = `${dateString}`.split("-");
+    if (parts.length < 3) return null;
+    const year = Number(parts[0]);
+    const month = Number(parts[1]) - 1;
+    const day = Number(parts[2]);
+    return new Date(year, month, day);
+  }
+
+  function isSameDay(dateA, dateB) {
+    return (
+      dateA.getFullYear() === dateB.getFullYear() &&
+      dateA.getMonth() === dateB.getMonth() &&
+      dateA.getDate() === dateB.getDate()
+    );
+  }
+
+  function getISOWeek(date) {
+    const tempDate = new Date(
+      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+    );
+    const dayNum = tempDate.getUTCDay() || 7;
+    tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(tempDate.getUTCFullYear(), 0, 1));
+    return Math.ceil(((tempDate - yearStart) / 86400000 + 1) / 7);
+  }
+
+  function getStartOfISOWeek(year, week) {
+    const simple = new Date(year, 0, 1 + (week - 1) * 7);
+    const dayOfWeek = simple.getDay() || 7;
+    if (dayOfWeek <= 4) {
+      simple.setDate(simple.getDate() - dayOfWeek + 1);
+    } else {
+      simple.setDate(simple.getDate() + 8 - dayOfWeek);
+    }
+    simple.setHours(0, 0, 0, 0);
+    return simple;
+  }
+
+  function getEndOfISOWeek(year, week) {
+    const start = getStartOfISOWeek(year, week);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return end;
+  }
+
+  const isDateInSelectedRange = (dateString) => {
+    const itemDate = parseLocalDate(dateString);
+    if (!itemDate) return false;
+
+    if (calendarView === "day") {
+      const chosenDate = parseLocalDate(selectedDate);
+      if (!chosenDate) return true;
+      return isSameDay(itemDate, chosenDate);
+    }
+
+    if (calendarView === "week") {
+      if (!selectedWeek) return true;
+      const [yearPart, weekPart] = selectedWeek.split("-W");
+      const year = Number(yearPart);
+      const week = Number(weekPart);
+      if (!year || !week) return true;
+
+      const weekStart = getStartOfISOWeek(year, week);
+      const weekEnd = getEndOfISOWeek(year, week);
+      return itemDate >= weekStart && itemDate <= weekEnd;
+    }
+
+    if (calendarView === "month") {
+      if (!selectedMonth) return true;
+      const [yearPart, monthPart] = selectedMonth.split("-");
+      const year = Number(yearPart);
+      const month = Number(monthPart) - 1;
+
+      return (
+        itemDate.getFullYear() === year && itemDate.getMonth() === month
+      );
+    }
+
+    return true;
+  };
+
+  const getCurrentRangeLabel = () => {
+    if (calendarView === "day") {
+      return selectedDate || "Selected day";
+    }
+    if (calendarView === "week") {
+      return selectedWeek || "Selected week";
+    }
+    return selectedMonth || "Selected month";
+  };
+
   useEffect(() => {
     const savedDarkMode = localStorage.getItem("darkMode");
     if (savedDarkMode !== null) setDarkMode(savedDarkMode === "true");
 
     const fetchData = async () => {
-      // Fetch Parcel data
       const shippedRes = await fetchParcelItems();
       const deliveryRes = await fetchParcelOutItems();
-
-      setParcelShipped(shippedRes || []);
-      setStockItems(shippedRes || []);
-
-      // Calculate status counts from parcel_in
-      const counts = { out: 0, critical: 0, low: 0, available: 0 };
-      (shippedRes || []).forEach((item) => {
-        const status = getStockStatus(item.quantity);
-        counts[status]++;
-      });
-      setStatusCounts(counts);
-
-      const itemsWithStock =
-        (shippedRes || []).filter((item) => item.quantity > 0).length || 0;
-      setParcelShippedCount(itemsWithStock);
-
-      setParcelDelivery(deliveryRes || []);
-      setParcelDeliveryCount((deliveryRes || []).length || 0);
-
-      // Fetch Product IN/OUT data
       const productInRes = await fetchProductInController();
       const productOutRes = await fetchProductOutController();
 
+      setParcelShipped(shippedRes || []);
+      setStockItems(shippedRes || []);
+      setParcelDelivery(deliveryRes || []);
+
       setProductIn(productInRes || []);
       setProductOut(productOutRes || []);
-
-      // Calculate product counts
-      const productInWithStock =
-        (productInRes || []).filter((item) => item.quantity > 0).length || 0;
-      setProductInCount(productInWithStock);
-      setProductOutCount((productOutRes || []).length || 0);
-
-      // Calculate product status counts
-      const productCounts = { out: 0, critical: 0, low: 0, available: 0 };
-      (productInRes || []).forEach((item) => {
-        const status = getStockStatus(item.quantity);
-        productCounts[status]++;
-      });
-      setProductStatusCounts(productCounts);
     };
 
     fetchData();
   }, []);
+
+  const filteredParcelShipped = useMemo(() => {
+    return parcelShipped.filter((item) => isDateInSelectedRange(item.date));
+  }, [parcelShipped, calendarView, selectedDate, selectedWeek, selectedMonth]);
+
+  const filteredStockItems = useMemo(() => {
+    return stockItems.filter((item) => isDateInSelectedRange(item.date));
+  }, [stockItems, calendarView, selectedDate, selectedWeek, selectedMonth]);
+
+  const filteredParcelDelivery = useMemo(() => {
+    return parcelDelivery.filter((item) => isDateInSelectedRange(item.date));
+  }, [parcelDelivery, calendarView, selectedDate, selectedWeek, selectedMonth]);
+
+  const filteredProductIn = useMemo(() => {
+    return productIn.filter((item) => isDateInSelectedRange(item.date));
+  }, [productIn, calendarView, selectedDate, selectedWeek, selectedMonth]);
+
+  const filteredProductOut = useMemo(() => {
+    return productOut.filter((item) => isDateInSelectedRange(item.date));
+  }, [productOut, calendarView, selectedDate, selectedWeek, selectedMonth]);
+
+  const parcelShippedCount =
+    filteredParcelShipped.filter((item) => item.quantity > 0).length || 0;
+
+  const parcelDeliveryCount = filteredParcelDelivery.length || 0;
+
+  const productInCount =
+    filteredProductIn.filter((item) => item.quantity > 0).length || 0;
+
+  const productOutCount = filteredProductOut.length || 0;
+
+  const statusCounts = useMemo(() => {
+    const counts = { out: 0, critical: 0, low: 0, available: 0 };
+    filteredStockItems.forEach((item) => {
+      const status = getStockStatus(item.quantity);
+      counts[status]++;
+    });
+    return counts;
+  }, [filteredStockItems]);
+
+  const productStatusCounts = useMemo(() => {
+    const counts = { out: 0, critical: 0, low: 0, available: 0 };
+    filteredProductIn.forEach((item) => {
+      const status = getStockStatus(item.quantity);
+      counts[status]++;
+    });
+    return counts;
+  }, [filteredProductIn]);
 
   const handleCardClick = (route, status = null, type = null) => {
     if (status && type) {
@@ -183,16 +283,16 @@ export default function page() {
     }
   };
 
-  // Get items that need attention (parcel items)
   const searchKey = inventorySearch.trim().toLowerCase();
-  const itemsNeedingAttention = stockItems.filter((item) => {
+
+  const itemsNeedingAttention = filteredStockItems.filter((item) => {
     return item.quantity < 10;
   });
 
-  // Get products that need attention
-  const productsNeedingAttention = productIn.filter((item) => {
+  const productsNeedingAttention = filteredProductIn.filter((item) => {
     if (item.quantity >= 10) return false;
     if (!searchKey) return true;
+
     return (
       (item.product_name || "").toLowerCase().includes(searchKey) ||
       buildProductCode(item).toLowerCase().includes(searchKey) ||
@@ -200,7 +300,6 @@ export default function page() {
     );
   });
 
-  // Combined alert count
   const totalAlertsCount =
     statusCounts.out +
     statusCounts.critical +
@@ -214,7 +313,6 @@ export default function page() {
           darkMode ? "bg-[#111827] text-white" : "bg-[#F3F4F6] text-black"
         }`}
       >
-        {/* Top Navbar */}
         <TopNavbar
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
@@ -222,7 +320,6 @@ export default function page() {
           setDarkMode={setDarkMode}
         />
 
-        {/* Sidebar */}
         <Sidebar
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
@@ -237,9 +334,139 @@ export default function page() {
           } pt-16`}
         >
           <div className="p-4 sm:p-6 lg:p-8">
+            {/* Calendar Filter Section */}
+            <div
+              className={`rounded-xl border p-4 sm:p-6 mb-8 ${
+                darkMode
+                  ? "bg-[#1F2937] border-[#374151]"
+                  : "bg-white border-[#E5E7EB]"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <CalendarDays className="w-5 h-5" />
+                <h2 className="text-lg font-semibold">Calendar Filters & Sorting</h2>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label
+                    className={`block text-sm font-medium mb-2 ${
+                      darkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    View Mode
+                  </label>
+                  <select
+                    value={calendarView}
+                    onChange={(e) => setCalendarView(e.target.value)}
+                    className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                      darkMode
+                        ? "border-[#374151] focus:ring-[#60A5FA] bg-[#111827] text-white"
+                        : "border-[#D1D5DB] focus:ring-[#1E40AF] bg-white text-black"
+                    }`}
+                  >
+                    <option value="day">Day</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                  </select>
+                </div>
+
+                {calendarView === "day" && (
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-2 ${
+                        darkMode ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
+                      Select Day
+                    </label>
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                        darkMode
+                          ? "border-[#374151] focus:ring-[#60A5FA] bg-[#111827] text-white"
+                          : "border-[#D1D5DB] focus:ring-[#1E40AF] bg-white text-black"
+                      }`}
+                    />
+                  </div>
+                )}
+
+                {calendarView === "week" && (
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-2 ${
+                        darkMode ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
+                      Select Week
+                    </label>
+                    <input
+                      type="week"
+                      value={selectedWeek}
+                      onChange={(e) => setSelectedWeek(e.target.value)}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                        darkMode
+                          ? "border-[#374151] focus:ring-[#60A5FA] bg-[#111827] text-white"
+                          : "border-[#D1D5DB] focus:ring-[#1E40AF] bg-white text-black"
+                      }`}
+                    />
+                  </div>
+                )}
+
+                {calendarView === "month" && (
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-2 ${
+                        darkMode ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
+                      Select Month
+                    </label>
+                    <input
+                      type="month"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                        darkMode
+                          ? "border-[#374151] focus:ring-[#60A5FA] bg-[#111827] text-white"
+                          : "border-[#D1D5DB] focus:ring-[#1E40AF] bg-white text-black"
+                      }`}
+                    />
+                  </div>
+                )}
+
+                <div
+                  className={`rounded-lg px-4 py-3 flex items-center gap-3 ${
+                    darkMode ? "bg-[#111827]" : "bg-[#F9FAFB]"
+                  }`}
+                >
+                  <Filter className="w-5 h-5" />
+                  <div>
+                    <p className="text-sm font-medium">Current Filter</p>
+                    <p
+                      className={`text-xs ${
+                        darkMode ? "text-gray-400" : "text-gray-600"
+                      }`}
+                    >
+                      {calendarView.toUpperCase()} • {getCurrentRangeLabel()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <p
+                className={`text-sm ${
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                Select any day, week, or month to filter dashboard totals and recent activity.
+              </p>
+            </div>
+
             {/* Summary Cards - Row 1: Main Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-              {/* Stock In (Parcel) - Royal Blue */}
               <div
                 onClick={() => handleCardClick("/view/parcel-shipped")}
                 className="bg-gradient-to-br from-[#1e40af] to-[#1e3a8a] text-white p-6 rounded-xl shadow-lg animate__animated animate__fadeInUp cursor-pointer transform transition-all duration-200 hover:scale-105 hover:shadow-2xl active:scale-95"
@@ -252,10 +479,9 @@ export default function page() {
                   Stock In
                 </h3>
                 <p className="text-3xl font-bold mb-2">{parcelShippedCount}</p>
-                <p className="text-xs opacity-75">Parcel items in stock</p>
+                <p className="text-xs opacity-75">Parcel items in selected range</p>
               </div>
 
-              {/* Stock Out (Parcel) - Orange */}
               <div
                 onClick={() => handleCardClick("/view/parcel-delivery")}
                 className="bg-gradient-to-br from-[#ea580c] to-[#c2410c] text-white p-6 rounded-xl shadow-lg animate__animated animate__fadeInUp cursor-pointer transform transition-all duration-200 hover:scale-105 hover:shadow-2xl active:scale-95"
@@ -269,10 +495,9 @@ export default function page() {
                   Stock Out
                 </h3>
                 <p className="text-3xl font-bold mb-2">{parcelDeliveryCount}</p>
-                <p className="text-xs opacity-75">Parcel deliveries</p>
+                <p className="text-xs opacity-75">Parcel deliveries in selected range</p>
               </div>
 
-              {/* Product IN - Purple */}
               <div
                 onClick={() => handleCardClick("/view/product-in")}
                 className="bg-gradient-to-br from-[#7c3aed] to-[#6d28d9] text-white p-6 rounded-xl shadow-lg animate__animated animate__fadeInUp cursor-pointer transform transition-all duration-200 hover:scale-105 hover:shadow-2xl active:scale-95"
@@ -286,10 +511,9 @@ export default function page() {
                   Product IN
                 </h3>
                 <p className="text-3xl font-bold mb-2">{productInCount}</p>
-                <p className="text-xs opacity-75">Products in stock</p>
+                <p className="text-xs opacity-75">Products in selected range</p>
               </div>
 
-              {/* Product OUT - Teal */}
               <div
                 onClick={() => handleCardClick("/view/product-out")}
                 className="bg-gradient-to-br from-[#0d9488] to-[#0f766e] text-white p-6 rounded-xl shadow-lg animate__animated animate__fadeInUp cursor-pointer transform transition-all duration-200 hover:scale-105 hover:shadow-2xl active:scale-95"
@@ -303,7 +527,7 @@ export default function page() {
                   Product OUT
                 </h3>
                 <p className="text-3xl font-bold mb-2">{productOutCount}</p>
-                <p className="text-xs opacity-75">Products shipped</p>
+                <p className="text-xs opacity-75">Products shipped in selected range</p>
               </div>
             </div>
 
@@ -313,7 +537,6 @@ export default function page() {
                 📦 Components Stock Status
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Out of Stock */}
                 <div
                   onClick={() =>
                     handleCardClick("/view/out-of-stock", "out", "parcel")
@@ -344,8 +567,8 @@ export default function page() {
                       className="bg-red-500 h-1.5 rounded-full transition-all duration-500"
                       style={{
                         width: `${
-                          stockItems.length > 0
-                            ? (statusCounts.out / stockItems.length) * 100
+                          filteredStockItems.length > 0
+                            ? (statusCounts.out / filteredStockItems.length) * 100
                             : 0
                         }%`,
                       }}
@@ -353,7 +576,6 @@ export default function page() {
                   </div>
                 </div>
 
-                {/* Critical Level */}
                 <div
                   onClick={() =>
                     handleCardClick("/view/out-of-stock", "critical", "parcel")
@@ -384,8 +606,9 @@ export default function page() {
                       className="bg-orange-500 h-1.5 rounded-full transition-all duration-500"
                       style={{
                         width: `${
-                          stockItems.length > 0
-                            ? (statusCounts.critical / stockItems.length) * 100
+                          filteredStockItems.length > 0
+                            ? (statusCounts.critical / filteredStockItems.length) *
+                              100
                             : 0
                         }%`,
                       }}
@@ -393,7 +616,6 @@ export default function page() {
                   </div>
                 </div>
 
-                {/* Low Stock */}
                 <div
                   onClick={() =>
                     handleCardClick("/view/out-of-stock", "low", "parcel")
@@ -424,8 +646,8 @@ export default function page() {
                       className="bg-yellow-500 h-1.5 rounded-full transition-all duration-500"
                       style={{
                         width: `${
-                          stockItems.length > 0
-                            ? (statusCounts.low / stockItems.length) * 100
+                          filteredStockItems.length > 0
+                            ? (statusCounts.low / filteredStockItems.length) * 100
                             : 0
                         }%`,
                       }}
@@ -433,7 +655,6 @@ export default function page() {
                   </div>
                 </div>
 
-                {/* Available */}
                 <div
                   onClick={() =>
                     handleCardClick("/view/out-of-stock", "available", "parcel")
@@ -464,8 +685,9 @@ export default function page() {
                       className="bg-green-500 h-1.5 rounded-full transition-all duration-500"
                       style={{
                         width: `${
-                          stockItems.length > 0
-                            ? (statusCounts.available / stockItems.length) * 100
+                          filteredStockItems.length > 0
+                            ? (statusCounts.available / filteredStockItems.length) *
+                              100
                             : 0
                         }%`,
                       }}
@@ -481,7 +703,6 @@ export default function page() {
                 📦 Product Stock Status
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Product Out of Stock */}
                 <div
                   onClick={() =>
                     handleCardClick("/view/out-of-stock", "out", "product")
@@ -514,8 +735,9 @@ export default function page() {
                       className="bg-red-500 h-1.5 rounded-full transition-all duration-500"
                       style={{
                         width: `${
-                          productIn.length > 0
-                            ? (productStatusCounts.out / productIn.length) * 100
+                          filteredProductIn.length > 0
+                            ? (productStatusCounts.out / filteredProductIn.length) *
+                              100
                             : 0
                         }%`,
                       }}
@@ -523,7 +745,6 @@ export default function page() {
                   </div>
                 </div>
 
-                {/* Product Critical */}
                 <div
                   onClick={() =>
                     handleCardClick("/view/out-of-stock", "critical", "product")
@@ -556,9 +777,9 @@ export default function page() {
                       className="bg-orange-500 h-1.5 rounded-full transition-all duration-500"
                       style={{
                         width: `${
-                          productIn.length > 0
+                          filteredProductIn.length > 0
                             ? (productStatusCounts.critical /
-                                productIn.length) *
+                                filteredProductIn.length) *
                               100
                             : 0
                         }%`,
@@ -567,7 +788,6 @@ export default function page() {
                   </div>
                 </div>
 
-                {/* Product Low Stock */}
                 <div
                   onClick={() =>
                     handleCardClick("/view/out-of-stock", "low", "product")
@@ -600,8 +820,9 @@ export default function page() {
                       className="bg-yellow-500 h-1.5 rounded-full transition-all duration-500"
                       style={{
                         width: `${
-                          productIn.length > 0
-                            ? (productStatusCounts.low / productIn.length) * 100
+                          filteredProductIn.length > 0
+                            ? (productStatusCounts.low / filteredProductIn.length) *
+                              100
                             : 0
                         }%`,
                       }}
@@ -609,7 +830,6 @@ export default function page() {
                   </div>
                 </div>
 
-                {/* Product Available */}
                 <div
                   onClick={() =>
                     handleCardClick(
@@ -646,9 +866,9 @@ export default function page() {
                       className="bg-green-500 h-1.5 rounded-full transition-all duration-500"
                       style={{
                         width: `${
-                          productIn.length > 0
+                          filteredProductIn.length > 0
                             ? (productStatusCounts.available /
-                                productIn.length) *
+                                filteredProductIn.length) *
                               100
                             : 0
                         }%`,
@@ -705,7 +925,7 @@ export default function page() {
               </div>
             )}
 
-            {/* Tables Section */}
+            {/* Search */}
             <div
               className={`rounded-xl border p-4 mb-6 ${
                 darkMode
@@ -732,6 +952,7 @@ export default function page() {
                 }`}
               />
             </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               {/* Parcel Items Needing Attention */}
               <div
@@ -787,21 +1008,23 @@ export default function page() {
                                 darkMode ? "text-gray-400" : "text-gray-600"
                               }`}
                             >
-                              All items well-stocked
+                              All items well-stocked in selected range
                             </p>
                           </td>
                         </tr>
                       ) : (
-                        itemsNeedingAttention.slice(0, 5).map((item) => (
+                        itemsNeedingAttention.slice(0, 5).map((item, index) => (
                           <tr
-                            key={item.id}
+                            key={item.id || `${item.name}-${index}`}
                             className={`${
                               darkMode
                                 ? "hover:bg-[#374151]"
                                 : "hover:bg-gray-50"
                             }`}
                           >
-                            <td className="px-4 py-3 text-sm text-center align-middle">{item.name}</td>
+                            <td className="px-4 py-3 text-sm text-center align-middle">
+                              {item.name}
+                            </td>
                             <td className="px-4 py-3 text-sm text-center align-middle">
                               {item.quantity}
                             </td>
@@ -883,14 +1106,14 @@ export default function page() {
                                 darkMode ? "text-gray-400" : "text-gray-600"
                               }`}
                             >
-                              All products well-stocked
+                              All products well-stocked in selected range
                             </p>
                           </td>
                         </tr>
                       ) : (
-                        productsNeedingAttention.slice(0, 5).map((item) => (
+                        productsNeedingAttention.slice(0, 5).map((item, index) => (
                           <tr
-                            key={item.id}
+                            key={item.id || `${item.product_name}-${index}`}
                             className={`${
                               darkMode
                                 ? "hover:bg-[#374151]"
@@ -937,7 +1160,6 @@ export default function page() {
 
             {/* Parcel Tables */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Recent Parcel IN */}
               <div
                 className={`rounded-xl shadow-lg p-6 border ${
                   darkMode
@@ -969,16 +1191,22 @@ export default function page() {
                         darkMode ? "divide-[#374151]" : "divide-gray-200"
                       }`}
                     >
-                      {parcelShipped.slice(0, 5).map((item, index) => (
+                      {filteredParcelShipped.slice(0, 5).map((item, index) => (
                         <tr
-                          key={index}
+                          key={item.id || `${item.name}-${item.date}-${index}`}
                           className={`${
                             darkMode ? "hover:bg-[#374151]" : "hover:bg-gray-50"
                           }`}
                         >
-                          <td className="px-4 py-3 text-sm text-center align-middle">{item.name}</td>
-                          <td className="px-4 py-3 text-sm text-center align-middle">{item.quantity}</td>
-                          <td className="px-4 py-3 text-sm text-center align-middle">{item.date}</td>
+                          <td className="px-4 py-3 text-sm text-center align-middle">
+                            {item.name}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center align-middle">
+                            {item.quantity}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center align-middle">
+                            {item.date}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -986,7 +1214,6 @@ export default function page() {
                 </div>
               </div>
 
-              {/* Recent Parcel OUT */}
               <div
                 className={`rounded-xl shadow-lg p-6 border ${
                   darkMode
@@ -1020,16 +1247,22 @@ export default function page() {
                         darkMode ? "divide-[#374151]" : "divide-gray-200"
                       }`}
                     >
-                      {parcelDelivery.slice(0, 5).map((item, index) => (
+                      {filteredParcelDelivery.slice(0, 5).map((item, index) => (
                         <tr
-                          key={index}
+                          key={item.id || `${item.name}-${item.date}-${index}`}
                           className={`${
                             darkMode ? "hover:bg-[#374151]" : "hover:bg-gray-50"
                           }`}
                         >
-                          <td className="px-4 py-3 text-sm text-center align-middle">{item.name}</td>
-                          <td className="px-4 py-3 text-sm text-center align-middle">{item.quantity}</td>
-                          <td className="px-4 py-3 text-sm text-center align-middle">{item.date}</td>
+                          <td className="px-4 py-3 text-sm text-center align-middle">
+                            {item.name}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center align-middle">
+                            {item.quantity}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center align-middle">
+                            {item.date}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1040,7 +1273,6 @@ export default function page() {
 
             {/* Product Tables */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Recent Product IN */}
               <div
                 className={`rounded-xl shadow-lg p-6 border ${
                   darkMode
@@ -1074,9 +1306,12 @@ export default function page() {
                         darkMode ? "divide-[#374151]" : "divide-gray-200"
                       }`}
                     >
-                      {productIn.slice(0, 5).map((item, index) => (
+                      {filteredProductIn.slice(0, 5).map((item, index) => (
                         <tr
-                          key={index}
+                          key={
+                            item.id ||
+                            `${item.product_name}-${item.date}-${index}`
+                          }
                           className={`${
                             darkMode ? "hover:bg-[#374151]" : "hover:bg-gray-50"
                           }`}
@@ -1084,8 +1319,12 @@ export default function page() {
                           <td className="px-4 py-3 text-sm text-center align-middle">
                             {item.product_name}
                           </td>
-                          <td className="px-4 py-3 text-sm text-center align-middle">{item.quantity}</td>
-                          <td className="px-4 py-3 text-sm text-center align-middle">{item.date}</td>
+                          <td className="px-4 py-3 text-sm text-center align-middle">
+                            {item.quantity}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center align-middle">
+                            {item.date}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1093,7 +1332,6 @@ export default function page() {
                 </div>
               </div>
 
-              {/* Recent Product OUT */}
               <div
                 className={`rounded-xl shadow-lg p-6 border ${
                   darkMode
@@ -1127,9 +1365,12 @@ export default function page() {
                         darkMode ? "divide-[#374151]" : "divide-gray-200"
                       }`}
                     >
-                      {productOut.slice(0, 5).map((item, index) => (
+                      {filteredProductOut.slice(0, 5).map((item, index) => (
                         <tr
-                          key={index}
+                          key={
+                            item.id ||
+                            `${item.product_name}-${item.date}-${index}`
+                          }
                           className={`${
                             darkMode ? "hover:bg-[#374151]" : "hover:bg-gray-50"
                           }`}
@@ -1137,8 +1378,12 @@ export default function page() {
                           <td className="px-4 py-3 text-sm text-center align-middle">
                             {item.product_name}
                           </td>
-                          <td className="px-4 py-3 text-sm text-center align-middle">{item.quantity}</td>
-                          <td className="px-4 py-3 text-sm text-center align-middle">{item.date}</td>
+                          <td className="px-4 py-3 text-sm text-center align-middle">
+                            {item.quantity}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center align-middle">
+                            {item.date}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
