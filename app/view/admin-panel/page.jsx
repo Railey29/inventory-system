@@ -60,6 +60,11 @@ export default function AdminPanelPage() {
       description: "Review monthly product out transactions and receipts.",
       path: "/view/product-out",
     },
+    {
+      title: "Activity Log",
+      description: "View system activity logs for staff and admins.",
+      path: "/view/admin-panel/activity-log",
+    }
   ];
 
   return (
