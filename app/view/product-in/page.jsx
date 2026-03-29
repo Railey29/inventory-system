@@ -540,6 +540,20 @@ export default function ProductInPage() {
       `Product IN added and components deducted from Stock In.${altText}`,
     );
 
+    await fetch("/api/activity-log", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    userId: user?.id || null,
+    userName: user?.email || user?.name || "Admin",
+    userType: isAdmin ? "admin" : "staff",
+    action: "Product IN",
+    module: "Inventory",
+    details: `Added ${quantityToAdd}x ${productName}`,
+  }),
+});
     await loadItems();
     await loadStockInItems();
 

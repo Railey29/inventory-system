@@ -158,6 +158,20 @@ export default function ProductOutPage() {
     );
 
     if (result) {
+
+      await fetch("/api/activity-log", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      user_name: "Admin",
+      user_type: "admin",
+      action: "Product OUT",
+      module: "Inventory",
+      details: `Removed ${quantity}x ${productName}`,
+    }),
+  });
       setProductName("");
       setQuantity(1);
       setMaxQuantity(0);
