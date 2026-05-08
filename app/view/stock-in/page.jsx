@@ -62,10 +62,30 @@ function PageContent() {
   ]);
   
   // Common date and time for all parcels
-  const [date, setDate] = useState("");
-  const [timeHour, setTimeHour] = useState("1");
-  const [timeMinute, setTimeMinute] = useState("00");
-  const [timeAMPM, setTimeAMPM] = useState("AM");
+  const getCurrentDate = () => {
+    const now = new Date();
+    return now.toISOString().slice(0, 10);
+  };
+  
+  const getCurrentTime = () => {
+    const now = new Date();
+    let hour = now.getHours();
+    const minute = now.getMinutes();
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12;
+    hour = hour ? hour : 12;
+    return {
+      hour: String(hour),
+      minute: minute < 10 ? `0${minute}` : String(minute),
+      ampm
+    };
+  };
+  
+  const currentTime = getCurrentTime();
+  const [date, setDate] = useState(getCurrentDate());
+  const [timeHour, setTimeHour] = useState(currentTime.hour);
+  const [timeMinute, setTimeMinute] = useState(currentTime.minute);
+  const [timeAMPM, setTimeAMPM] = useState(currentTime.ampm);
   const [shippingMode, setShippingMode] = useState("");
   const [clientName, setClientName] = useState("");
   const [price, setPrice] = useState("");
@@ -231,6 +251,72 @@ function PageContent() {
       return;
     }
 
+    // Check for duplicate item codes with different names in single input mode
+    if (isSingleInput && itemCode) {
+      const existingItems = items.filter(item => item.item_name && item.item_name !== name);
+      const duplicateCode = existingItems.find(existingItem => 
+        existingItem.item_code && existingItem.item_code === itemCode
+      );
+      
+      if (duplicateCode) {
+        alert(`Item code "${itemCode}" is already assigned to item "${duplicateCode.item_name}". Please use a different item code.`);
+        return;
+      }
+    }
+
+    // Check for duplicate item codes with different names in multiple input mode
+    if (!isSingleInput) {
+      const codesWithNames = parcelsToProcess.filter(row => row.itemCode && row.name);
+      const duplicateCodes = codesWithNames.filter((row, index, self) => {
+        return codesWithNames.findIndex(other => 
+          other.itemCode === row.itemCode && other.name !== row.name
+        ) !== index;
+      });
+      
+      if (duplicateCodes.length > 0) {
+        const duplicate = duplicateCodes[0];
+        alert(`Item code "${duplicate.itemCode}" is already assigned to item "${duplicate.name}". Please use a different item code.`);
+        return;
+      }
+    }
+
+    // Additional validation: Check if item name already exists with different code
+    if (isSingleInput && name) {
+      const existingWithDifferentCode = items.find(item => 
+        item.item_name === name && item.item_code !== itemCode
+      );
+      
+      if (existingWithDifferentCode) {
+        alert(`Item "${name}" already exists with item code "${existingWithDifferentCode.item_code}". Please use that item code or update the existing item.`);
+        return;
+      }
+    }
+
+    // Additional validation for multiple input mode
+    if (!isSingleInput) {
+      const duplicates = parcelsToProcess.filter((row, index, self) => {
+        return parcelsToProcess.findIndex(other => 
+          (other.itemCode === row.itemCode && other.name !== row.name) ||
+          (other.name === row.name && other.item_code !== row.itemCode)
+        ) !== index;
+      });
+      
+      if (duplicates.length > 0) {
+        const duplicate = duplicates[0];
+        const conflictType = duplicate.itemCode === parcelsToProcess.find(r => r.itemCode === duplicate.itemCode)?.itemCode ? "code" : "name";
+        const conflictingItem = parcelsToProcess.find(r => 
+          (conflictType === "code" && r.itemCode === duplicate.itemCode) ||
+          (conflictType === "name" && r.name === duplicate.name)
+        );
+        
+        alert(`Duplicate detected: ${conflictType === "code" ? 
+          `Item code "${duplicate.itemCode}" is already assigned to item "${conflictingItem.name}"` : 
+          `Item "${duplicate.name}" already exists with item code "${conflictingItem.item_code}"`
+        }. Please use a different item code or update the existing item.`);
+        return;
+      }
+    }
+
     const confirmed = window.confirm(
       `Confirm Stock In: Are you sure you want to add ${validParcels.length} item(s) to stock in?`,
     );
@@ -283,10 +369,12 @@ function PageContent() {
       clientName: "",
       itemCode: "",
     }]);
-    setDate("");
-    setTimeHour("1");
-    setTimeMinute("00");
-    setTimeAMPM("AM");
+    const resetTime = getCurrentTime();
+    const resetDate = getCurrentDate();
+    setDate(resetDate);
+    setTimeHour(resetTime.hour);
+    setTimeMinute(resetTime.minute);
+    setTimeAMPM(resetTime.ampm);
     setShippingMode("");
     setClientName("");
     setPrice("");

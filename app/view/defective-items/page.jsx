@@ -168,15 +168,15 @@ export default function Page() {
   const handleDeleteRecord = async (recordId) => {
     const confirmed = window.confirm(
       "Delete this defective item record?\n\n" +
-      "The quantity will be restored to inventory."
+      "This will only remove the record. No quantity will be restored."
     );
     
     if (!confirmed) return;
     
-    const result = await deleteDefectiveItem(recordId, true);
+    const result = await deleteDefectiveItem(recordId);
     
     if (result.success) {
-      alert(result.message || "Record deleted and inventory restored");
+      alert(result.message || "Record deleted successfully");
       await loadData();
     } else {
       alert(result.error || "Failed to delete record");
@@ -819,7 +819,7 @@ export default function Page() {
                                     ? "hover:bg-[#374151] text-[#9CA3AF] hover:text-[#EF4444]"
                                     : "hover:bg-gray-100 text-gray-500 hover:text-red-600"
                                 }`}
-                                title="Delete record and restore inventory"
+                                title="Delete record (no quantity restored)"
                               >
                                 <Trash2 className="w-5 h-5" />
                               </button>
